@@ -1,0 +1,28 @@
+services:
+  galaxy-agent:
+    build: .
+    image: galaxy-agent-local:1.6.0
+    ports:
+      - "127.0.0.1:4310:4310"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "4310"
+      DATA_DIR: "./data"
+      LOG_LEVEL: "info"
+      # Set a long random value to require Authorization: Bearer <token> on /api and /preview.
+      APP_AUTH_TOKEN: "${APP_AUTH_TOKEN:-}"
+      RATE_LIMIT_MAX: "${RATE_LIMIT_MAX:-1200}"
+      RATE_LIMIT_WRITE_MAX: "${RATE_LIMIT_WRITE_MAX:-300}"
+    volumes:
+      - galaxy-data:/app/data
+    tmpfs:
+      - /tmp
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  galaxy-data:

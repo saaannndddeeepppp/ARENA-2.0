@@ -1,0 +1,1 @@
+The browser client is served by Vite during development and built to `web-dist/` for production. It communicates only with the local Fastify API. Provider network requests are initiated by the local server after the user supplies a key.
