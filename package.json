@@ -1,0 +1,61 @@
+{
+  "name": "galaxy-agent-local",
+  "version": "1.4.4",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "web"
+  ],
+  "scripts": {
+    "setup": "npm install && npm run setup:local",
+    "setup:local": "tsx scripts/setup.ts",
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "tsx watch server/src/index.ts",
+    "dev:web": "vite --config web/vite.config.ts",
+    "build": "tsc -p server/tsconfig.json && vite build --config web/vite.config.ts",
+    "start": "node server/dist/index.js",
+    "typecheck": "tsc --noEmit -p server/tsconfig.json && tsc --noEmit -p web/tsconfig.json",
+    "lint": "npm run typecheck && prettier --check server/src web/src web/vite.config.ts scripts tests README.md docs",
+    "format": "prettier --write server/src web/src web/vite.config.ts scripts tests README.md docs",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "npm run build && vitest run tests/e2e",
+    "doctor": "tsx scripts/doctor.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "backup": "tsx scripts/backup.ts",
+    "check": "npm run lint && npm test && npm run test:e2e"
+  },
+  "dependencies": {
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/static": "^10.1.6",
+    "archiver": "^7.0.1",
+    "better-sqlite3": "^11.8.1",
+    "dotenv": "^16.6.1",
+    "fastify": "^5.2.1",
+    "lucide-react": "^0.468.0",
+    "pino": "^9.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.3",
+    "remark-gfm": "^4.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.2",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.13.4",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

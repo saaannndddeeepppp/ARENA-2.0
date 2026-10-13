@@ -1,0 +1,16 @@
+# Decisions
+
+The visual reference was the public [Arena Agent page](https://arena.ai/agent), inspected on 2026-10-12 and captured as `reference/arena-agent-empty-state.webp`. Search-result brand images were reviewed but not reused; the app uses its own simple lettermark and bundled icon font/library.
+
+The final 2026-10-13 preview was visually checked after restoring the complete dark stylesheet from the earlier source snapshot; the corrected capture is `reference/clone-preview-final.webp`.
+
+- **Local-first and no account gate:** implemented as requested. No app login or user account exists.
+- **Dark theme:** the current public reference screenshot is light, while the supplied specification explicitly requires a dark default. The implementation follows the explicit dark-theme requirement and borrows the reference's compact left rail, centered empty state, restrained controls, and connector row.
+- **Build approach:** implemented the local agent core, real encrypted GitHub PAT workflows, session repo cloning/branch creation, Git lifecycle and PR/check APIs, and a managed loopback development preview with a same-origin proxy. GitHub and preview panels use real backend state; third-party productivity connectors are still labeled unavailable rather than simulated.
+- **Provider protocols:** OpenAI-compatible endpoints, native Gemini, and Anthropic use their actual streaming/chat protocols. Model catalogs are discovered from the configured endpoint at runtime; no fixed list is bundled.
+- **Persistence:** SQLite persists chat/session/provider/tool/cost/artifact/event data. Per-session event replay stores the last 2,000 sequenced events. On startup, running sessions become `interrupted`; Resume rebuilds from persisted transcript and workspace. A live provider socket or exact suspended tool stack cannot be restored, so resume starts a new continuation turn.
+- **GitHub session policy:** GitHub credentials are encrypted at rest. Repository selection is saved separately. A chat session can create one PR; once closed or merged the API locks push and workspace download/upload routes. Session files remain inspectable through the workspace tree.
+- **Preview proxy:** Only ports managed by the session's preview process manager are routable, and the backend connects to loopback. The HTML proxy rewrites root-relative assets and avoids following remote redirects; WebSocket-based HMR is not proxied, so file changes refresh the iframe through SSE instead.
+- **Shell model:** use a scrubbed environment, fixed `bash` executable, process group termination and one-run approval for high-impact patterns. This is not an OS sandbox, and shell commands can access other host paths; this risk is documented prominently.
+- **Search:** use a public DuckDuckGo HTML search path so basic search can work without a search API key. The app calls it only when the user asks the agent to search.
+- **Remaining scope:** Google/Notion/Linear/Cal integrations, full provider failover, context compaction, multimodal image/PDF understanding, audio waveform rendering, exhaustive upload magic-byte validation/chunking, and OS-level resource monitoring are not shipped. See `README.md` and the current test report.
