@@ -3,6 +3,7 @@ import { publish } from "./events.js";
 import {
   getProvider,
   providerSecret,
+  providerUsable,
   chatStream,
   cachedModels,
 } from "./providers.js";
@@ -136,7 +137,7 @@ export function runSession(
     throw new Error("This session is already running.");
   const provider = getProvider(providerId);
   if (!provider.enabled) throw new Error("Selected provider is disabled.");
-  if (!providerSecret(provider))
+  if (!providerUsable(provider))
     throw new Error(
       "Configure an API key for the selected provider in Settings.",
     );
@@ -464,7 +465,7 @@ async function chatWithFailover(
       })
       .filter((p): p is ReturnType<typeof getProvider> => Boolean(p));
     for (const candidate of others) {
-      if (!providerSecret(candidate)) continue;
+      if (!providerUsable(candidate)) continue;
       const failoverModel = chooseFailoverModel(
         cachedModels(candidate),
         primaryModel,
@@ -537,7 +538,7 @@ export async function compareCompletion(
   const provider = getProvider(providerId);
   if (!provider.enabled)
     throw new Error(`Provider ${provider.name} is disabled.`);
-  if (!providerSecret(provider))
+  if (!providerUsable(provider))
     throw new Error(`Configure an API key for ${provider.name} in Settings.`);
   const started = now();
   let text = "";

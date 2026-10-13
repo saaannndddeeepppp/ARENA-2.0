@@ -3199,6 +3199,7 @@ export default function App() {
                                 "custom-openai": "http://localhost:1234/v1",
                                 "gemini-openai":
                                   "https://generativelanguage.googleapis.com/v1beta/openai",
+                                demo: "demo://offline",
                               };
                               setProviderForm({
                                 ...providerForm,
@@ -3216,6 +3217,10 @@ export default function App() {
                               ["custom-openai", "Custom OpenAI-compatible"],
                               ["ollama", "Ollama local"],
                               ["gemini-openai", "Gemini OpenAI-compatible"],
+                              [
+                                "demo",
+                                "Offline demo (no key / internet needed)",
+                              ],
                             ].map(([v, l]) => (
                               <option key={v} value={v}>
                                 {l}
@@ -3258,6 +3263,9 @@ export default function App() {
                         Connect provider and fetch models <ArrowUp size={15} />
                       </button>
                       <p className="form-hint">
+                        {providerForm.kind === "demo"
+                          ? "Offline demo needs no key and no internet — it streams built-in sample replies so you can try chat, Agent/Direct and Battle/Side-by-Side anywhere. "
+                          : ""}
                         Your API key is stored only on this machine and never
                         returned in plaintext.
                       </p>

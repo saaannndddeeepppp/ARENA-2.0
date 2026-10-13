@@ -10,7 +10,8 @@ export type ProviderKind =
   | "ollama"
   | "gemini"
   | "anthropic"
-  | "gemini-openai";
+  | "gemini-openai"
+  | "demo";
 export type ModelInfo = {
   id: string;
   displayName: string;
@@ -54,6 +55,7 @@ const providerSchema = z.object({
     "gemini",
     "anthropic",
     "gemini-openai",
+    "demo",
   ]),
   base_url: z.string().url(),
   api_key: z.string().optional(),
@@ -68,6 +70,7 @@ const defaults: Record<ProviderKind, string> = {
   anthropic: "https://api.anthropic.com/v1",
   "gemini-openai": "https://generativelanguage.googleapis.com/v1beta/openai",
   "custom-openai": "http://localhost:1234/v1",
+  demo: "demo://offline",
 };
 
 export function getProviders() {
@@ -220,8 +223,86 @@ function normalizeModels(
 const badGateway = (message: string) =>
   Object.assign(new Error(message), { statusCode: 424 });
 
+export const DEMO_MODELS: ModelInfo[] = [
+  {
+    id: "galaxy-demo-concise",
+    displayName: "Galaxy Demo · Concise (offline)",
+    contextWindow: 32000,
+    supportsTools: false,
+    supportsVision: false,
+    supportsReasoning: false,
+  },
+  {
+    id: "galaxy-demo-detailed",
+    displayName: "Galaxy Demo · Detailed (offline)",
+    contextWindow: 32000,
+    supportsTools: false,
+    supportsVision: false,
+    supportsReasoning: false,
+  },
+];
+
+/** Keyless, offline provider so the full UI/agent loop can be tried where
+ * outbound LLM APIs are unreachable. It never touches the network. */
+function demoPrompt(messages: Array<Record<string, unknown>>): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (!m || m.role !== "user") continue;
+    if (typeof m.content === "string") return m.content;
+    if (Array.isArray(m.content))
+      return m.content
+        .map((part: any) =>
+          typeof part === "string" ? part : (part?.text ?? ""),
+        )
+        .join(" ")
+        .trim();
+  }
+  return "";
+}
+
+async function demoStream(
+  model: string,
+  messages: Array<Record<string, unknown>>,
+  signal: AbortSignal,
+  onText: (chunk: string) => void,
+): Promise<StreamResult> {
+  const started = Date.now();
+  const prompt = demoPrompt(messages).slice(0, 900) || "your request";
+  const detailed = model.includes("detailed");
+  const text = detailed
+    ? `**Demo response (offline model)**\n\nYou asked: "${prompt}"\n\nHere is how a real model would approach this:\n\n1. **Understand** — restate the goal and note any constraints in the request.\n2. **Plan** — break the work into small, verifiable steps.\n3. **Execute** — in Agent Mode a real provider would call workspace tools (files, shell, web) to do the work; this offline demo cannot run tools.\n4. **Verify** — check the result and summarise what changed.\n\n_Connect a real provider (OpenRouter, Kilo, OpenAI…) from a network that can reach it, and this same flow runs for real._`
+    : `**Demo response (offline model)** — you asked: "${prompt}"\n\nThis is a short built-in reply so you can try the chat, modes and Battle/Side-by-Side flows without internet. Connect a real provider and ask again for a full answer.`;
+  const chunks = text.match(/[\s\S]{1,28}/g) ?? [text];
+  for (const chunk of chunks) {
+    if (signal.aborted) break;
+    onText(chunk);
+    await new Promise((r) => setTimeout(r, 6));
+  }
+  const shown = signal.aborted ? "" : text;
+  return {
+    text: shown,
+    toolCalls: [],
+    usage: {
+      prompt: Math.ceil(prompt.length / 4),
+      completion: Math.ceil(shown.length / 4),
+    },
+    latency: Date.now() - started,
+  };
+}
+
+/** Demo providers need no API key; every other kind does. */
+export function providerUsable(provider: ProviderRow): boolean {
+  return provider.kind === "demo" || Boolean(providerSecret(provider));
+}
+
 export async function fetchModels(providerId: string): Promise<ModelInfo[]> {
   const provider = getProvider(providerId);
+  if (provider.kind === "demo") {
+    db.prepare(
+      "UPDATE providers SET models_json=?,models_fetched_at=? WHERE id=?",
+    ).run(JSON.stringify(DEMO_MODELS), now(), providerId);
+    return DEMO_MODELS;
+  }
   const headers = authHeaders(provider);
   let url = `${provider.base_url.replace(/\/$/, "")}/models`;
   if (provider.kind === "openrouter")
@@ -293,6 +374,8 @@ export async function chatStream(
   reasoning = "medium",
   onText: (chunk: string) => void,
 ): Promise<StreamResult> {
+  if (provider.kind === "demo")
+    return demoStream(model, messages, signal, onText);
   if (provider.kind === "gemini")
     return nativeGeminiStream(provider, model, messages, tools, signal, onText);
   if (provider.kind === "anthropic")

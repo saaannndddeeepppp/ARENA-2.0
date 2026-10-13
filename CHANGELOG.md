@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0 — Offline demo provider
+
+- New built-in **Offline demo** provider kind (Settings → Providers → Provider type): needs no API key and no internet. "Connect provider and fetch models" returns two built-in models (Concise / Detailed), and chat, Agent/Direct modes, and Battle/Side-by-Side all stream clearly-labelled sample replies. This makes the whole app testable in network-restricted previews where real LLM endpoints (Kilo, OpenRouter, OpenAI…) cannot be reached; it never calls tools and never pretends to be a real model.
+
 ## 1.4.4 — Fetch-models error visibility
 
 - Provider catalog failures now return **424 (Failed Dependency)** instead of 502, because some reverse proxies replace upstream-502 bodies with their own error page — which reduced the detailed "Could not reach …" message to a bare "Request failed (502)" in the UI.

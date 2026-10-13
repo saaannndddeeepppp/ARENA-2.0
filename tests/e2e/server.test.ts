@@ -116,6 +116,61 @@ describe("modes and compare (1.2.0)", () => {
   });
 });
 
+describe("offline demo provider", () => {
+  it("fetches demo models and answers a comparison without any network", async () => {
+    const created = await fetch(`${base}/api/providers`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Offline Demo",
+        kind: "demo",
+        base_url: "demo://offline",
+      }),
+    });
+    expect(created.status).toBe(201);
+    const provider = (await created.json()) as { provider: { id: string } };
+    const fetched = await fetch(
+      `${base}/api/providers/${provider.provider.id}/refresh-models`,
+      { method: "POST", headers: { "content-type": "application/json" } },
+    );
+    expect(fetched.status).toBe(200);
+    const catalog = (await fetched.json()) as {
+      models: Array<{ id: string }>;
+    };
+    expect(catalog.models.length).toBeGreaterThanOrEqual(2);
+    const session = (await (
+      await fetch(`${base}/api/sessions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      })
+    ).json()) as { id: string };
+    const compared = await fetch(`${base}/api/sessions/${session.id}/compare`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        content: "Explain recursion briefly",
+        a: {
+          providerId: provider.provider.id,
+          modelId: catalog.models[0]!.id,
+        },
+        b: {
+          providerId: provider.provider.id,
+          modelId: catalog.models[1]!.id,
+        },
+      }),
+    });
+    expect(compared.status).toBe(200);
+    const result = (await compared.json()) as {
+      a: { ok: boolean; text: string };
+      b: { ok: boolean; text: string };
+    };
+    expect(result.a.ok).toBe(true);
+    expect(result.b.ok).toBe(true);
+    expect(result.a.text).toContain("Demo response");
+  });
+});
+
 describe("provider model-fetch errors", () => {
   it("reports an unreachable provider with an actionable 424", async () => {
     const created = await fetch(`${base}/api/providers`, {
