@@ -3,7 +3,8 @@ import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import { createReadStream, existsSync } from "node:fs";
 import { mkdir, readFile, stat, writeFile, unlink } from "node:fs/promises";
-import { resolve, basename, extname } from "node:path";
+import { basename, dirname, extname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { config } from "./config.js";
@@ -1192,7 +1193,11 @@ function mimeType(ext: string) {
   );
 }
 
-const builtWeb = resolve(process.cwd(), "web-dist");
+// In the Electron package the cwd is arbitrary, so resolve the web build
+// relative to this file (server/dist -> ../../web-dist) unless overridden.
+const builtWeb =
+  process.env.WEB_DIST_DIR ??
+  resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "web-dist");
 if (existsSync(builtWeb)) {
   await app.register(fastifyStatic, {
     root: builtWeb,

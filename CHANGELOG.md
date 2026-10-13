@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0 — Electron desktop app (single portable EXE)
+
+- The full app (React UI + Fastify backend + SQLite) now ships as a Windows desktop app: Electron's main process (`electron/main.ts`) boots the same backend on 127.0.0.1 as a utility process, waits for `/api/health`, and opens the UI in a native window. User data (sessions, workspaces, encrypted keys) lives in the OS app-data folder (`%APPDATA%/Galaxy Agent/data`), so the exe itself is stateless and movable.
+- `npm run app:build` produces **one portable file** — `dist-electron/Galaxy-Agent-<version>-portable.exe` — no installer, no separate server to start (electron-builder `portable` target, `asarUnpack` for the native `better-sqlite3` module, native deps rebuilt for Electron automatically). `npm run app:dev` runs the desktop shell from the repo; the plain web flow (`npm start`, port 4310) is unchanged.
+- The backend now resolves `web-dist` relative to its own file (or `WEB_DIST_DIR`) instead of the process cwd, which packaged apps cannot rely on.
+- Note: the sandbox used to develop this cannot download the Electron binary (GitHub release-asset CDN is egress-blocked), so the final `.exe` packaging step runs on a Windows machine with `npm run app:build` (cross-compiling the native `better-sqlite3` module from Linux is not supported by node-gyp); everything else (main-process compile, backend resolution, test suite) is covered here.
+
 ## 1.5.0 — Offline demo provider
 
 - New built-in **Offline demo** provider kind (Settings → Providers → Provider type): needs no API key and no internet. "Connect provider and fetch models" returns two built-in models (Concise / Detailed), and chat, Agent/Direct modes, and Battle/Side-by-Side all stream clearly-labelled sample replies. This makes the whole app testable in network-restricted previews where real LLM endpoints (Kilo, OpenRouter, OpenAI…) cannot be reached; it never calls tools and never pretends to be a real model.

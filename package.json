@@ -1,6 +1,6 @@
 {
   "name": "galaxy-agent-local",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -24,7 +24,11 @@
     "doctor": "tsx scripts/doctor.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "backup": "tsx scripts/backup.ts",
-    "check": "npm run lint && npm test && npm run test:e2e"
+    "check": "npm run lint && npm test && npm run test:e2e",
+    "build:electron": "tsc -p electron/tsconfig.json",
+    "app:dev": "npm run build && npm run build:electron && electron .",
+    "app:pack": "npm run build && npm run build:electron && electron-builder --dir",
+    "app:build": "npm run build && npm run build:electron && electron-builder --win portable"
   },
   "dependencies": {
     "@fastify/multipart": "^9.0.3",
@@ -49,6 +53,8 @@
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
     "prettier": "^3.4.2",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
@@ -57,5 +63,34 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "main": "electron/dist/main.js",
+  "build": {
+    "appId": "com.galaxyagent.desktop",
+    "productName": "Galaxy Agent",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/dist/**",
+      "server/dist/**",
+      "web-dist/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "npmRebuild": true,
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "Galaxy-Agent-${version}-portable.exe"
+    }
+  },
+  "description": "Galaxy Agent — local-first AI agent workspace (web + Electron desktop, single portable EXE).",
+  "author": "Galaxy Agent"
 }

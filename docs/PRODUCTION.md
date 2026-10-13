@@ -34,9 +34,9 @@ user.
 Build without compose:
 
 ```bash
-docker build -t galaxy-agent-local:1.5.0 .
+docker build -t galaxy-agent-local:1.6.0 .
 docker run --rm -p 127.0.0.1:4310:4310 -v galaxy-data:/app/data \
-  -e APP_AUTH_TOKEN="$APP_AUTH_TOKEN" galaxy-agent-local:1.5.0
+  -e APP_AUTH_TOKEN="$APP_AUTH_TOKEN" galaxy-agent-local:1.6.0
 ```
 
 ## Configuration (environment)

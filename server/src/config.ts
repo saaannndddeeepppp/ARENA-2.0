@@ -40,7 +40,7 @@ const schema = z.object({
     .max(2000000)
     .default(160000),
   FAILOVER_ENABLED: boolFromEnv,
-  APP_VERSION: z.string().max(40).default("1.5.0"),
+  APP_VERSION: z.string().max(40).default("1.6.0"),
 });
 const parsed = schema.parse(process.env);
 export const rootDir = resolve(process.cwd());

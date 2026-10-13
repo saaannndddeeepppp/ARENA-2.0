@@ -24,6 +24,28 @@ npm start
 
 `npm run setup` installs packages, creates `data/app.db`, initializes the SQLite schema, and writes a random `data/.secret` file with mode `0600`. Local app data and workspaces are kept in `./data/`; deleting that directory removes local app state. No container runtime is used.
 
+## Desktop app (single EXE)
+
+The same frontend + backend also ships as a Windows desktop app. The Electron
+shell starts the bundled backend locally and opens the UI in a native window —
+no browser, no separate server to run.
+
+```bash
+npm install
+npm run app:build
+```
+
+This produces **one file**: `dist-electron/Galaxy-Agent-<version>-portable.exe`.
+Double-click it and the app runs (portable build — nothing is installed).
+Your data is kept in `%APPDATA%/Galaxy Agent/data`, not next to the exe, so
+you can move or replace the exe freely. During development,
+`npm run app:dev` launches the desktop shell straight from the repo.
+Building the exe needs a normal internet connection (Electron binary +
+headers are downloaded on first build) and should run on Windows for the
+Windows exe (the native SQLite module cannot be cross-compiled from Linux); `npm run app:pack`
+gives an unpacked folder for debugging. macOS/Linux packages can be produced
+with electron-builder's `--mac` / `--linux` targets but are not preconfigured.
+
 ## First run
 
 The UI defaults to the light Galaxy theme (Settings → Appearance can switch to dark). Open **Settings → Providers**, add a provider, and fetch its live model catalog. The provider key is encrypted locally using AES-256-GCM. Provider requests originate from the server. Keys are masked in the UI and never included in API responses.
@@ -60,6 +82,9 @@ Implemented in 1.1.0: real token-based Notion, Google Drive/Docs/Gmail, Linear a
 - `npm run backup` — consistent SQLite backup into `data/backups/`
 - `npm run check` — lint + all tests + production e2e
 - `npm run seed:demo` — add an illustrative local session
+- `npm run app:dev` — run the Electron desktop shell from the repo
+- `npm run app:build` — build the single portable Windows EXE into `dist-electron/`
+- `npm run app:pack` — unpacked desktop build for debugging
 
 ## Safety
 
